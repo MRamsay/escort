@@ -230,6 +230,14 @@ def main():
 
         if random.randint(0, 2) < 1:
             draw_circle(surface, constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, random_color(100, 250))
+
+        fps = clock.get_fps();
+        fps_text = scoreFont.render(str(int(clock.get_fps())), True, (255, 0, 0))
+        fps_text_rect = fps_text.get_rect(width=(fps_text.get_width() * 2), left=5,
+                                          top=(constants.WINDOW_HEIGHT - fps_text.get_height() - 5))
+
+        surface.blit(fps_text, fps_text_rect)
+
         asteroid_sprites.draw(surface)
         bullet_sprites.draw(surface)
         other_sprites.draw(surface)
@@ -250,12 +258,12 @@ def main():
     if game.get_Ships_saved() < constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]:
         intro_outro_script(surface, background_transparent, background_x, scoreFont,
                            "Game over. Score: " + str(game.get_score()))
-        main()
+
     else:
         intro_outro_script(surface, background_transparent, background_x, scoreFont,
                            "Winner! Score: " + str(game.get_score()))
-        main()
 
+    main()
 
 def intro_outro_script(surface, background, background_x, scoreFont, text):
     surface.blit(background, (background_x, 0))
