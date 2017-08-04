@@ -1,5 +1,6 @@
-import pygame, random, math
-
+import pygame
+import random
+import math
 
 
 class Critter(pygame.sprite.Sprite):
