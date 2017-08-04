@@ -11,6 +11,7 @@ def main():
     '''	Setting up game variables
 
 	'''
+
     DIFFICULTY = 0
     game = Game()
     pygame.mixer.pre_init(0, 0, 0, 1024)
@@ -24,32 +25,17 @@ def main():
     scoreFont = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 32)
     scoreFontDouble = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 64)
     scoreFontQuad = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 128)
-    asteroid_sprites = pygame.sprite.Group()
-    critter_sprites = pygame.sprite.Group()
-    bullet_sprites = pygame.sprite.Group()
-    other_sprites = pygame.sprite.Group()
-    turret = Turret(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT)
-    other_sprites.add(turret)
 
     ticktock = 1
     game_over = False
     wait_time = constants.FPS
 
-    wait_time_minimum = [120, 40, 30]
-
-    livesText = scoreFont.render("Lives: " + str(game.get_lives()), True, constants.WHITE)
-    scoreText = scoreFont.render("Score: " + str(game.get_score()), True, constants.WHITE)
-    Ships_savedText = scoreFont.render(
-        "Ships saved: " + str(game.get_Ships_saved()) + " /" + str(constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]), True,
-        constants.WHITE)
-
     '''
-    setup background
+    Setup Main Menu
     '''
     background_x = (-constants.WINDOW_WIDTH / 48)
     transparency_background = pygame.Surface([constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT], 32)
     transparency_background.blit(background_transparent, (background_x, 0))
-    transparency_background_reference = pygame.Surface([constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT], 32)
     selection = {"old": 0, "new": 0}
     selection_options = ["EASY", "MEDIUM", "JAZZY"]
     instructions = ["UP/DOWN ARROWS OR W/S KEYS: CHANGE SELECTION", "SPACE: CONFIRM SELECTION/SHOOT",
@@ -111,7 +97,7 @@ def main():
             x_coordinate = ((surface.get_width() / 2) - scoreText.get_size()[0] / 2)
             surface.blit(scoreText, (x_coordinate, y_coordinate))
 
-        surface.blit(background, star_rect[0], (star_rect))
+        surface.blit(background, star_rect[0], star_rect)
         updates.append(
             (draw_circle(surface, constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, random_color(100, 255)), (50, 50)))
         pygame.display.update(updates)
@@ -156,6 +142,17 @@ def main():
 	
 	'''
 
+    wait_time_minimum = [120, 40, 30]
+
+    asteroid_sprites = pygame.sprite.Group()
+    critter_sprites = pygame.sprite.Group()
+    bullet_sprites = pygame.sprite.Group()
+    other_sprites = pygame.sprite.Group()
+    turret = Turret(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT)
+    other_sprites.add(turret)
+
+    asteroid_builder = AsteroidBuilder(constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH, constants.SPEED)
+
     while game_over == False:
         surface.blit(background, (background_x, 0))
         seconds = clock.tick(constants.FPS)  # length between frames
@@ -168,15 +165,15 @@ def main():
             if wait_time >= wait_time_minimum[DIFFICULTY]:
                 wait_time -= 10
             if len(critter_sprites) < 10:
-                if random.randint(0, 10) > 2:
-                    critter_sprites.add(
-                        Critter(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, critter_sprites, constants.FPS))
-                elif len(asteroid_sprites) < 3:
-                    critter_sprites.add(
-                        Critter(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, critter_sprites, constants.FPS))
-                    asteroid_sprites.add(Asteroids(constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+                critter_sprites.add(
+                    Critter(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, critter_sprites, constants.FPS))
+                asteroid_sprites.add(asteroid_builder.build())
+                if random.randint(0, 10) < 2 and len(asteroid_sprites) < 3:
+                    asteroid_builder.build()
+
         else:
             ticktock += .5
+
         for sprite in bullet_sprites:
             sprite.update_position(constants.SPEED, seconds)
 
@@ -215,18 +212,17 @@ def main():
         for sprite in critter_sprites:
             sprite.update_position(constants.SPEED, constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, game, seconds,
                                    critter_sprites)  # update critter positions
-        for sprite in asteroid_sprites:
-            sprite.update_position(constants.SPEED, constants.WINDOW_WIDTH, game, seconds)
-        for n in range(0, 3):
-            if n == 0 and game.get_updated_variables()[n]:
-                livesText = scoreFont.render("Lives: " + str(game.get_lives()), True, constants.WHITE)
-            elif n == 1 and game.get_updated_variables()[n]:
-                scoreText = scoreFont.render("Score: " + str(game.get_score()), True, constants.WHITE)
-            elif n == 2 and game.get_updated_variables()[n]:
-                Ships_savedText = scoreFont.render(
-                    "Ships saved: " + str(game.get_Ships_saved()) + " /" + str(
-                        constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]), True,
-                    constants.WHITE)
+
+        asteroid_sprites.update(seconds)
+
+        livesText = scoreFont.render("Lives: " + str(game.get_lives()), True, constants.WHITE)
+
+        scoreText = scoreFont.render("Score: " + str(game.get_score()), True, constants.WHITE)
+
+        Ships_savedText = scoreFont.render(
+            "Ships saved: " + str(game.get_Ships_saved()) + " /" + str(
+                constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]), True,
+            constants.WHITE)
 
         if random.randint(0, 2) < 1:
             draw_circle(surface, constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, random_color(100, 250))
@@ -246,12 +242,13 @@ def main():
         surface.blit(scoreText, (10, 230))
         surface.blit(Ships_savedText, (10, 200))
         pygame.display.update()
-        surface.fill(constants.BLACK)  #
-        if game.get_Ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]:
-            game_over = True
-        if game.get_lives() <= 0:
-            game_over = True
+
         clock.tick(constants.FPS)
+
+        if game.get_Ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
+            game_over = True
+
+    # End Game
 
     surface.fill(constants.BLACK)  # clear surface
     pygame.mixer.music.fadeout(1600)
@@ -264,6 +261,7 @@ def main():
                            "Winner! Score: " + str(game.get_score()))
 
     main()
+
 
 def intro_outro_script(surface, background, background_x, scoreFont, text):
     surface.blit(background, (background_x, 0))
