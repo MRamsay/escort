@@ -1,4 +1,4 @@
-import math, random, pygame, sys
+import sys
 from asteroid import *
 from critters import *
 from game import *
@@ -8,9 +8,8 @@ import constants
 
 
 def main():
-    '''	Setting up game variables
 
-	'''
+    #game variables
 
     DIFFICULTY = 0
     game = Game()
@@ -71,45 +70,45 @@ def main():
                 if event.key == pygame.K_SPACE:
                     game_over = True
 
-        scoreText = scoreFontQuad.render(constants.TITLE, True, constants.WHITE)
-        surface.blit(scoreText, [(surface.get_width() / 2) - scoreText.get_size()[0] / 2, 100])
+        score_text = scoreFontQuad.render(constants.TITLE, True, constants.WHITE)
+        surface.blit(score_text, [(surface.get_width() / 2) - score_text.get_size()[0] / 2, 100])
         for n, option in enumerate(selection_options):
             needs_rendering = False
             if n == selection["new"]:
-                scoreText = scoreFontDouble.render(option, True, constants.RED)
+                score_text = scoreFontDouble.render(option, True, constants.RED)
                 needs_rendering = True
             elif n == selection["old"]:
-                scoreText = scoreFontDouble.render(option, True, constants.WHITE)
+                score_text = scoreFontDouble.render(option, True, constants.WHITE)
                 needs_rendering = True
                 y_coordinate = (surface.get_height() / 2 - 200) + (100 * (n - 1))
-                x_coordinate = ((surface.get_width() / 2) - scoreText.get_size()[0] / 2)
-                updates.append([x_coordinate, y_coordinate, scoreText.get_size()[0], scoreText.get_size()[1]])
-                surface.blit(scoreText, (x_coordinate, y_coordinate))
+                x_coordinate = ((surface.get_width() / 2) - score_text.get_size()[0] / 2)
+                updates.append([x_coordinate, y_coordinate, score_text.get_size()[0], score_text.get_size()[1]])
+                surface.blit(score_text, (x_coordinate, y_coordinate))
             if needs_rendering:
                 y_coordinate = (surface.get_height() / 2 - 200) + (100 * (n - 1))
-                x_coordinate = ((surface.get_width() / 2) - scoreText.get_size()[0] / 2)
-                surface.blit(scoreText, (x_coordinate, y_coordinate))
-                updates.append([x_coordinate, y_coordinate, scoreText.get_size()[0], scoreText.get_size()[1]])
+                x_coordinate = ((surface.get_width() / 2) - score_text.get_size()[0] / 2)
+                surface.blit(score_text, (x_coordinate, y_coordinate))
+                updates.append([x_coordinate, y_coordinate, score_text.get_size()[0], score_text.get_size()[1]])
 
         for n in range(0, len(instructions)):
-            scoreText = scoreFont.render(instructions[n], True, constants.WHITE)
+            score_text = scoreFont.render(instructions[n], True, constants.WHITE)
             y_coordinate = (surface.get_height() / 2 + 300) + (50 * (n - 1))
-            x_coordinate = ((surface.get_width() / 2) - scoreText.get_size()[0] / 2)
-            surface.blit(scoreText, (x_coordinate, y_coordinate))
+            x_coordinate = ((surface.get_width() / 2) - score_text.get_size()[0] / 2)
+            surface.blit(score_text, (x_coordinate, y_coordinate))
 
         surface.blit(background, star_rect[0], star_rect)
         updates.append(
-            (draw_circle(surface, constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, random_color(100, 255)), (50, 50)))
+            (draw_circle(surface, random_color(100, 255)), (50, 50)))
         pygame.display.update(updates)
         pygame.display.update(star_rect)
         star_rect = updates[-1]
 
         if first_time:
             for n, option in enumerate(selection_options):
-                scoreText = scoreFontDouble.render(option, True, constants.WHITE)
+                score_text = scoreFontDouble.render(option, True, constants.WHITE)
                 y_coordinate = (surface.get_height() / 2 - 200) + (100 * (n - 1))
-                x_coordinate = ((surface.get_width() / 2) - scoreText.get_size()[0] / 2)
-                surface.blit(scoreText, (x_coordinate, y_coordinate))
+                x_coordinate = ((surface.get_width() / 2) - score_text.get_size()[0] / 2)
+                surface.blit(score_text, (x_coordinate, y_coordinate))
 
             first_time = False
             background.blit(surface, (0, 0))
@@ -148,10 +147,12 @@ def main():
     critter_sprites = pygame.sprite.Group()
     bullet_sprites = pygame.sprite.Group()
     other_sprites = pygame.sprite.Group()
-    turret = Turret(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT)
+    turret = Turret()
     other_sprites.add(turret)
 
-    asteroid_builder = AsteroidBuilder(constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH, constants.SPEED)
+    asteroid_builder = AsteroidBuilder()
+    critter_builder = CritterBuilder(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, constants.FPS, game,
+                                     constants.SPEED)
 
     while game_over == False:
         surface.blit(background, (background_x, 0))
@@ -165,8 +166,8 @@ def main():
             if wait_time >= wait_time_minimum[DIFFICULTY]:
                 wait_time -= 10
             if len(critter_sprites) < 10:
-                critter_sprites.add(
-                    Critter(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, critter_sprites, constants.FPS))
+                critter_sprites.add(critter_builder.build())
+
                 asteroid_sprites.add(asteroid_builder.build())
                 if random.randint(0, 10) < 2 and len(asteroid_sprites) < 3:
                     asteroid_builder.build()
@@ -175,14 +176,14 @@ def main():
             ticktock += .5
 
         for sprite in bullet_sprites:
-            sprite.update_position(constants.SPEED, seconds)
+            sprite.update_position(seconds)
 
         keys = pygame.key.get_pressed()  # Event handling for keys pressed
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            background_x = turret.update_position("left", constants.WINDOW_WIDTH, constants.SPEED, seconds,
+            background_x = turret.update_position("left", seconds,
                                                   background_x)
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            background_x = turret.update_position("right", constants.WINDOW_WIDTH, constants.SPEED, seconds,
+            background_x = turret.update_position("right", seconds,
                                                   background_x)
         if keys[pygame.K_SPACE]:
             if turret.get_can_shoot():
@@ -190,69 +191,70 @@ def main():
                 bullet_sprites.add(bullet)
                 laser.play()
             turret.update_can_shoot(False)
-        if (keys[pygame.K_SPACE] == False):
-            turret.update_can_shoot(True)
-        if keys[pygame.K_ESCAPE]:
-            game_over = True
+
+        turret.update_can_shoot(not keys[pygame.K_SPACE])
+
+        game_over = keys[pygame.K_ESCAPE]
 
         collisions = pygame.sprite.groupcollide(critter_sprites, bullet_sprites, False,
                                                 True)  # check for collisions of bullets and critters
-        if collisions:
-            for critters in collisions:
-                explosion.play()
-                critters.shot(game)
-                pygame.draw.circle(surface, (255, 150, 0),
-                                   [(critters.get_position()[0] + (critters.get_dimensions()[0]) / 2),
-                                    (critters.get_position()[1]) + ((critters.get_dimensions()[1]) / 2)], 100)
+
+        for critters in collisions:
+            critters.shot()
+            explosion.play()
+            pygame.draw.circle(surface, (255, 150, 0),
+                               [critters.rect.x + (critters.rect.width / 2),
+                                critters.rect.y + (critters.rect.height / 2)], 100)
+
         collisions = pygame.sprite.groupcollide(asteroid_sprites, bullet_sprites, False, True)
-        if collisions:
-            for Asteroid in collisions:
-                Asteroid.shot(game)
-                explosion.play()
-        for sprite in critter_sprites:
-            sprite.update_position(constants.SPEED, constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, game, seconds,
-                                   critter_sprites)  # update critter positions
+
+        for Asteroid in collisions:
+            Asteroid.shot()
+            explosion.play()
+
+        critter_sprites.update(seconds, critter_sprites)
 
         asteroid_sprites.update(seconds)
 
-        livesText = scoreFont.render("Lives: " + str(game.get_lives()), True, constants.WHITE)
+        lives_text = scoreFont.render("Lives: " + str(game.get_lives()), True, constants.WHITE)
 
-        scoreText = scoreFont.render("Score: " + str(game.get_score()), True, constants.WHITE)
+        score_text = scoreFont.render("Score: " + str(game.get_score()), True, constants.WHITE)
 
-        Ships_savedText = scoreFont.render(
-            "Ships saved: " + str(game.get_Ships_saved()) + " /" + str(
+        ships_saved_text = scoreFont.render(
+            "Ships saved: " + str(game.get_ships_saved()) + " /" + str(
                 constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]), True,
             constants.WHITE)
 
         if random.randint(0, 2) < 1:
-            draw_circle(surface, constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, random_color(100, 250))
+            draw_circle(surface, random_color(100, 250))
 
-        fps = clock.get_fps();
         fps_text = scoreFont.render(str(int(clock.get_fps())), True, (255, 0, 0))
         fps_text_rect = fps_text.get_rect(width=(fps_text.get_width() * 2), left=5,
                                           top=(constants.WINDOW_HEIGHT - fps_text.get_height() - 5))
-
-        surface.blit(fps_text, fps_text_rect)
 
         asteroid_sprites.draw(surface)
         bullet_sprites.draw(surface)
         other_sprites.draw(surface)
         critter_sprites.draw(surface)
-        surface.blit(livesText, (10, 260))
-        surface.blit(scoreText, (10, 230))
-        surface.blit(Ships_savedText, (10, 200))
+
+        surface.blit(lives_text, (10, 260))
+        surface.blit(score_text, (10, 230))
+        surface.blit(ships_saved_text, (10, 200))
+
+        surface.blit(fps_text, fps_text_rect)
+
         pygame.display.update()
 
         clock.tick(constants.FPS)
 
-        if game.get_Ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
+        if game.get_ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
             game_over = True
 
     # End Game
 
     surface.fill(constants.BLACK)  # clear surface
     pygame.mixer.music.fadeout(1600)
-    if game.get_Ships_saved() < constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]:
+    if game.get_ships_saved() < constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]:
         intro_outro_script(surface, background_transparent, background_x, scoreFont,
                            "Game over. Score: " + str(game.get_score()))
 
@@ -263,11 +265,12 @@ def main():
     main()
 
 
-def intro_outro_script(surface, background, background_x, scoreFont, text):
+def intro_outro_script(surface, background, background_x, score_font, text):
     surface.blit(background, (background_x, 0))
-    scoreText = scoreFont.render(text, True, constants.WHITE)  # create new screen with gameover text on it
-    surface.blit(scoreText, (
-        (surface.get_width() / 2) - scoreText.get_size()[0] / 2, surface.get_height() / 2))  # blit to surface, centered
+    score_text = score_font.render(text, True, constants.WHITE)  # create new screen with gameover text on it
+    surface.blit(score_text, (
+        (surface.get_width() / 2) - score_text.get_size()[0] / 2,
+        surface.get_height() / 2))  # blit to surface, centered
     pygame.display.update()  # draw to screen
     pygame.time.wait(1500)
 
@@ -280,18 +283,12 @@ def random_color(minimum, maximum):
     return colour
 
 
-def random_color_greyscale(minimum, maximum):
-    r = random.randint(minimum, maximum)
-    colour = [r, r, r]
-    return colour
-
-
-def draw_circle(screen, WINDOWWIDTH, WINDOWHEIGHT, color):
-    x = random.randint(1, WINDOWWIDTH)
-    y = random.randint(1, WINDOWHEIGHT)
+def draw_circle(screen, color):
+    x = random.randint(1, constants.WINDOW_WIDTH)
+    y = random.randint(1, constants.WINDOW_HEIGHT)
     size = random.randint(1, 5)
     pygame.draw.circle(screen, color, (x, y), size)
-    return (x - 25, y - 25)
+    return x - 25, y - 25
 
 
 if __name__ == '__main__':
