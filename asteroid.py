@@ -1,13 +1,14 @@
 import pygame
 import random
+import constants
 
 
 class AsteroidBuilder:
 
-    def __init__(self, window_height, window_width, speed):
-        self.window_height = window_height
-        self.window_width = window_width
-        self.speed = speed
+    def __init__(self):
+        self.window_height = constants.WINDOW_HEIGHT
+        self.window_width = constants.WINDOW_WIDTH
+        self.speed = constants.SPEED
 
     def build(self):
         return Asteroids(self.window_height, self.window_width, self.speed)
@@ -59,8 +60,9 @@ class Asteroids(pygame.sprite.Sprite):
         elif self.rect.x < (0 - self.rect.x):
             self.kill()
 
-    def shot(self, game):
+    def shot(self):
+        self.hit_points -= 1
+
         if self.hit_points <= 0:
             self.kill()
-        else:
-            self.hit_points -= 1
+
