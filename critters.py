@@ -79,13 +79,15 @@ class Critter(pygame.sprite.Sprite):
         self.velocity_y = self.speed
 
         if self.tracking:
-            if -movement_speed < x - self.tracking_position[0] < movement_speed:
+            if -movement_speed < self.rect.x - self.tracking_position[0] < movement_speed:
                 self.x = self.tracking_position[0]
                 self.velocity_x = 0
             elif self.x < self.tracking_position[0]:
                 self.velocity_x = self.speed
             else:
                 self.velocity_x = -self.speed
+        else:
+            self.velocity_x = 0
 
     def display_position(self, delta_t):
         x = self.rect.x - (self.velocity_x * delta_t)
@@ -143,6 +145,9 @@ class Critter(pygame.sprite.Sprite):
         delta_y = target.rect.y - self.rect.y
 
         return abs(math.hypot(delta_x, delta_y))
+
+    def get_position(self):
+        return [self.rect.x, self.rect.y]
 
     def track_ship(self, critter_sprites):
 

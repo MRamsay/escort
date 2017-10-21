@@ -144,7 +144,7 @@ def main():
 	
 	'''
 
-    wait_time_minimum = [120, 40, 30]
+    wait_time_minimum = [120, 40, 15]
 
     asteroid_sprites = pygame.sprite.Group()
     critter_sprites = pygame.sprite.Group()
