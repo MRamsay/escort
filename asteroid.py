@@ -48,13 +48,6 @@ class Asteroids(pygame.sprite.Sprite):
         self.velocity_x = self.speed
         self.velocity_y = 0
 
-    def display_position(self, delta_t):
-
-        x = self.rect.x - (self.velocity_x * delta_t)
-        y = self.rect.y - (self.velocity_y * delta_t)
-
-        return x, y
-
     def update(self):
 
         self.rect.x += (self.speed * constants.TICK_PERIOD)

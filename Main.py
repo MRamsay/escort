@@ -4,8 +4,8 @@ from critters import *
 from game import *
 from turret import *
 from bullet import *
+from InterpolateDrawGroup import *
 import constants
-
 
 
 def main():
@@ -146,16 +146,18 @@ def main():
 
     wait_time_minimum = [120, 40, 15]
 
-    asteroid_sprites = pygame.sprite.Group()
-    critter_sprites = pygame.sprite.Group()
-    bullet_sprites = pygame.sprite.Group()
-    other_sprites = pygame.sprite.Group()
+    critter_sprites = InterpolateDrawGroup()
+    asteroid_sprites = InterpolateDrawGroup()
+    bullet_sprites = InterpolateDrawGroup()
+    other_sprites = InterpolateDrawGroup()
+
+    sprite_groups = (critter_sprites, asteroid_sprites, bullet_sprites, other_sprites)
+
     turret = Turret()
     other_sprites.add(turret)
 
     asteroid_builder = AsteroidBuilder()
-    critter_builder = CritterBuilder(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, constants.FPS, game,
-                                     constants.SPEED)
+    critter_builder = CritterBuilder(game)
 
     elapsed_time = pygame.time.get_ticks()
     update_time = constants.TICK_PERIOD
@@ -230,6 +232,9 @@ def main():
 
             asteroid_sprites.update()
 
+            if game.get_ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
+                game_over = True
+
         surface.blit(background, (background_x, 0))
         seconds = clock.tick()  # length between frames
 
@@ -254,19 +259,9 @@ def main():
 
         delta = elapsed_time - pygame.time.get_ticks()
 
-        for critter in critter_sprites:
-            surface.blit(critter.image, critter.display_position(delta))
+        map(lambda x: x.draw(surface, delta), sprite_groups)
 
-        for asteroid in asteroid_sprites:
-            surface.blit(asteroid.image, asteroid.display_position(delta))
 
-        for bullet in bullet_sprites:
-            surface.blit(bullet.image, bullet.display_position(delta))
-
-        for thing in other_sprites:
-            surface.blit(thing.image, thing.display_position(delta))
-
-        clock.tick(300)
 
         surface.blit(lives_text, (10, 260))
         surface.blit(score_text, (10, 230))
@@ -276,8 +271,9 @@ def main():
 
         pygame.display.update()
 
-        if game.get_ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
-            game_over = True
+        clock.tick(300)
+
+
 
     # End Game
 

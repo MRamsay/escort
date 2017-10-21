@@ -13,13 +13,6 @@ class Bullet(pygame.sprite.Sprite):
         self.velocity_x = 0
         self.velocity_y = -constants.SPEED * 3
 
-    def display_position(self, delta_t):
-
-        x = self.rect.x - (self.velocity_x * delta_t)
-        y = self.rect.y - (self.velocity_y * delta_t)
-
-        return x, y
-
     def update_position(self):
         if self.rect.y >= self.rect.height:
             self.rect.y += self.velocity_y * constants.TICK_PERIOD

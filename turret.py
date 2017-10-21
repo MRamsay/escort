@@ -29,13 +29,6 @@ class Turret(pygame.sprite.Sprite):
 
         return background_x
 
-    def display_position(self, delta_t):
-
-        x = self.rect.x - (self.velocity_x * delta_t)
-        y = self.rect.y - (self.velocity_y * delta_t)
-
-        return x, y
-
     def get_gun_position(self):
         position = {
             "x": self.rect.x + (self.rect.width / 2),
