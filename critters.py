@@ -2,6 +2,8 @@ import pygame
 import random
 import math
 
+import constants
+
 
 class CritterBuilder:
 
@@ -11,6 +13,8 @@ class CritterBuilder:
         self.fps = fps
         self.game = game
         self.speed = speed
+
+
 
     def build(self):
         return Critter(self.window_width, self.window_height, self.fps, self.game, self.speed)
@@ -35,6 +39,10 @@ class Critter(pygame.sprite.Sprite):
         self.game = game
         self.speed = speed
 
+        self.velocity_x = 0
+        self.velocity_y = 0
+
+
         pygame.sprite.Sprite.__init__(self)
 
         self.attitude_angle = 0
@@ -53,20 +61,49 @@ class Critter(pygame.sprite.Sprite):
         self.rect.y = 0 - self.rect.height
         self.rect.x = (random.randint(self.rect.width / 2, (self.window_width - self.rect.width)))
 
+        self.x = self.rect.x
+        self.y = self.rect.y
+
         self.moving_image = False
 
         if self._species == "Ship":
             self.image = pygame.transform.rotate(self.image, 180)
 
-    def update(self, seconds, critter_sprites):
+    def calculate_motion(self, critter_sprites):
 
-        movement_speed = self.speed * seconds
+        movement_speed = self.speed * constants.TICK_PERIOD
 
         if self._species != "Ship":
             self.track_ship(critter_sprites)  # Obtain a target
 
-        self.rect.y += movement_speed
+        self.velocity_y = self.speed
+
+        if self.tracking:
+            if -movement_speed < x - self.tracking_position[0] < movement_speed:
+                self.x = self.tracking_position[0]
+                self.velocity_x = 0
+            elif self.x < self.tracking_position[0]:
+                self.velocity_x = self.speed
+            else:
+                self.velocity_x = -self.speed
+
+    def display_position(self, delta_t):
+        x = self.rect.x - (self.velocity_x * delta_t)
+        y = self.rect.y - (self.velocity_y * delta_t)
+
+        return x, y
+
+    def update(self, critter_sprites):
+
+        self.calculate_motion(critter_sprites)
+
         self.timer += 1
+
+        self.x += self.velocity_x * constants.TICK_PERIOD
+        self.y += self.velocity_y * constants.TICK_PERIOD
+
+        self.rect.x = self.x
+        self.rect.y = self.y
 
         if self.timer >= self.timer_max and self._species != "Ship":
             if not self.moving_image:
@@ -77,15 +114,7 @@ class Critter(pygame.sprite.Sprite):
                 self.moving_image = False
             self.timer = 0
 
-        if self.tracking:
-            if -movement_speed < self.rect.x - self.tracking_position[0] < movement_speed:
-                self.rect.x = self.tracking_position[0]
-            elif self.rect.x < self.tracking_position[0]:
-                self.rect.x += movement_speed
-            else:
-                self.rect.x -= movement_speed
-
-        if self.rect.y > self.window_height:
+        if self.y > self.window_height:
             if self._species == "Ship":
                 self.game.update_score(50)
                 self.game.update_ships_saved()
@@ -93,9 +122,6 @@ class Critter(pygame.sprite.Sprite):
                 self.game.update_score(-10)
                 self.game.update_lives(-1)
             self.kill()
-
-    def get_position(self):
-        return [self.rect.x, self.rect.y]
 
     def shot(self):
         if self._species == "Ship":
@@ -107,6 +133,9 @@ class Critter(pygame.sprite.Sprite):
 
     def get_species(self):
         return self._species
+
+    def get_velocity(self):
+        return self.velocity_x, self.velocity_y
 
     # distance from critter to target
     def calculate_distance(self, target):

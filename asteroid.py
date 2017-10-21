@@ -45,9 +45,19 @@ class Asteroids(pygame.sprite.Sprite):
 
         self.hit_points = 5  # number of hits it takes
 
-    def update(self, seconds):
+        self.velocity_x = self.speed
+        self.velocity_y = 0
 
-        self.rect.x += (self.speed * seconds)
+    def display_position(self, delta_t):
+
+        x = self.rect.x - (self.velocity_x * delta_t)
+        y = self.rect.y - (self.velocity_y * delta_t)
+
+        return x, y
+
+    def update(self):
+
+        self.rect.x += (self.speed * constants.TICK_PERIOD)
 
         self.image = pygame.transform.rotate(self.image_reference, self.rotation_degrees)
 
