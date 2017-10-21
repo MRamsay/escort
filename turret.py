@@ -11,13 +11,22 @@ class Turret(pygame.sprite.Sprite):
         self.rect.y = constants.WINDOW_HEIGHT - self.rect.height * 1.5
         self.can_shoot = True
 
-    def update_position(self, direction, seconds, background_x):
+        self.velocity_x = 0
+        self.velocity_y = 0
+
+    def update_position(self, direction, background_x):
+
         if direction == "left" and self.rect.x > 15:
-            self.rect.x -= (constants.SPEED * seconds) * 3
-            background_x += (constants.SPEED * seconds) * .15
+            self.velocity_x = -constants.SPEED * 1.5
         elif direction == "right" and self.rect.x < (constants.WINDOW_WIDTH - self.rect.width):
-            self.rect.x += (constants.SPEED * seconds) * 3
-            background_x -= (constants.SPEED * seconds) * .15
+            self.velocity_x = constants.SPEED * 1.5
+        else:
+            self.velocity_x = 0
+
+        background_x += -self.velocity_x * constants.TICK_PERIOD * 0.02
+
+        self.rect.x += self.velocity_x * constants.TICK_PERIOD
+
         return background_x
 
     def get_gun_position(self):

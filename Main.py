@@ -4,6 +4,7 @@ from critters import *
 from game import *
 from turret import *
 from bullet import *
+from InterpolateDrawGroup import *
 import constants
 
 
@@ -25,6 +26,8 @@ def main():
     scoreFontDouble = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 64)
     scoreFontQuad = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 128)
 
+
+
     ticktock = 1
     game_over = False
     wait_time = constants.FPS
@@ -43,7 +46,7 @@ def main():
     star_rect = ((0, 0), (0, 0))
     surface.blit(transparency_background, (0, 0))
     pygame.display.update()
-    while game_over == False:
+    while not game_over:
 
         # print(clock.get_fps())
         updates = []
@@ -141,80 +144,102 @@ def main():
 	
 	'''
 
-    wait_time_minimum = [120, 40, 30]
+    wait_time_minimum = [120, 40, 15]
 
-    asteroid_sprites = pygame.sprite.Group()
-    critter_sprites = pygame.sprite.Group()
-    bullet_sprites = pygame.sprite.Group()
-    other_sprites = pygame.sprite.Group()
+    critter_sprites = InterpolateDrawGroup()
+    asteroid_sprites = InterpolateDrawGroup()
+    bullet_sprites = InterpolateDrawGroup()
+    other_sprites = InterpolateDrawGroup()
+
+    sprite_groups = (critter_sprites, asteroid_sprites, bullet_sprites, other_sprites)
+
     turret = Turret()
     other_sprites.add(turret)
 
     asteroid_builder = AsteroidBuilder()
-    critter_builder = CritterBuilder(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT, constants.FPS, game,
-                                     constants.SPEED)
+    critter_builder = CritterBuilder(game)
 
-    while game_over == False:
+    elapsed_time = pygame.time.get_ticks()
+    update_time = constants.TICK_PERIOD
+
+    while not game_over:
+
+        loops = 0
+
+        while elapsed_time < pygame.time.get_ticks() and loops < constants.MAX_FRAME_SKIP:
+
+            loops += 1
+            elapsed_time += update_time
+
+            for event in pygame.event.get():  # keeps program from seeming unrsponsive to OS
+                pass
+
+            if ticktock > wait_time:
+                ticktock = 0
+                if wait_time >= wait_time_minimum[DIFFICULTY]:
+                    wait_time -= 10
+                if len(critter_sprites) < 10:
+                    critter_sprites.add(critter_builder.build())
+
+                    asteroid_sprites.add(asteroid_builder.build())
+                    if random.randint(0, 10) < 2 and len(asteroid_sprites) < 3:
+                        asteroid_builder.build()
+
+            else:
+                ticktock += .5
+
+            for sprite in bullet_sprites:
+                sprite.update_position()
+
+            keys = pygame.key.get_pressed()  # Event handling for keys pressed
+
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                background_x = turret.update_position("left", background_x)
+            elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                background_x = turret.update_position("right",
+                                                      background_x)
+            else:
+                turret.update_position(0, 0)
+
+            if keys[pygame.K_SPACE]:
+                if turret.get_can_shoot():
+                    bullet = Bullet(turret.get_gun_position())
+                    bullet_sprites.add(bullet)
+                    laser.play()
+                turret.update_can_shoot(False)
+
+            turret.update_can_shoot(not keys[pygame.K_SPACE])
+
+            game_over = keys[pygame.K_ESCAPE]
+
+            collisions = pygame.sprite.groupcollide(critter_sprites, bullet_sprites, False,
+                                                    True)  # check for collisions of bullets and critters
+
+            for critters in collisions:
+                critters.shot()
+                explosion.play()
+                pygame.draw.circle(surface, (255, 150, 0),
+                                   [critters.rect.x + (critters.rect.width / 2),
+                                    critters.rect.y + (critters.rect.height / 2)], 100)
+
+            collisions = pygame.sprite.groupcollide(asteroid_sprites, bullet_sprites, False, True)
+
+            for Asteroid in collisions:
+                Asteroid.shot()
+                explosion.play()
+
+            critter_sprites.update(critter_sprites)
+
+            asteroid_sprites.update()
+
+            if game.get_ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
+                game_over = True
+
         surface.blit(background, (background_x, 0))
-        seconds = clock.tick(constants.FPS)  # length between frames
-        # print(clock.get_fps())
-        for event in pygame.event.get():  # keeps program from seeming unrsponsive to OS
-            pass
+        seconds = clock.tick()  # length between frames
 
-        if ticktock > wait_time:
-            ticktock = 0
-            if wait_time >= wait_time_minimum[DIFFICULTY]:
-                wait_time -= 10
-            if len(critter_sprites) < 10:
-                critter_sprites.add(critter_builder.build())
 
-                asteroid_sprites.add(asteroid_builder.build())
-                if random.randint(0, 10) < 2 and len(asteroid_sprites) < 3:
-                    asteroid_builder.build()
 
-        else:
-            ticktock += .5
-
-        for sprite in bullet_sprites:
-            sprite.update_position(seconds)
-
-        keys = pygame.key.get_pressed()  # Event handling for keys pressed
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            background_x = turret.update_position("left", seconds,
-                                                  background_x)
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            background_x = turret.update_position("right", seconds,
-                                                  background_x)
-        if keys[pygame.K_SPACE]:
-            if turret.get_can_shoot():
-                bullet = Bullet(turret.get_gun_position())
-                bullet_sprites.add(bullet)
-                laser.play()
-            turret.update_can_shoot(False)
-
-        turret.update_can_shoot(not keys[pygame.K_SPACE])
-
-        game_over = keys[pygame.K_ESCAPE]
-
-        collisions = pygame.sprite.groupcollide(critter_sprites, bullet_sprites, False,
-                                                True)  # check for collisions of bullets and critters
-
-        for critters in collisions:
-            critters.shot()
-            explosion.play()
-            pygame.draw.circle(surface, (255, 150, 0),
-                               [critters.rect.x + (critters.rect.width / 2),
-                                critters.rect.y + (critters.rect.height / 2)], 100)
-
-        collisions = pygame.sprite.groupcollide(asteroid_sprites, bullet_sprites, False, True)
-
-        for Asteroid in collisions:
-            Asteroid.shot()
-            explosion.play()
-
-        critter_sprites.update(seconds, critter_sprites)
-
-        asteroid_sprites.update(seconds)
 
         lives_text = scoreFont.render("Lives: " + str(game.get_lives()), True, constants.WHITE)
 
@@ -232,10 +257,11 @@ def main():
         fps_text_rect = fps_text.get_rect(width=(fps_text.get_width() * 2), left=5,
                                           top=(constants.WINDOW_HEIGHT - fps_text.get_height() - 5))
 
-        asteroid_sprites.draw(surface)
-        bullet_sprites.draw(surface)
-        other_sprites.draw(surface)
-        critter_sprites.draw(surface)
+        delta = elapsed_time - pygame.time.get_ticks()
+
+        map(lambda x: x.draw(surface, delta), sprite_groups)
+
+
 
         surface.blit(lives_text, (10, 260))
         surface.blit(score_text, (10, 230))
@@ -245,10 +271,9 @@ def main():
 
         pygame.display.update()
 
-        clock.tick(constants.FPS)
+        clock.tick(300)
 
-        if game.get_ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
-            game_over = True
+
 
     # End Game
 
