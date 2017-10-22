@@ -21,7 +21,6 @@ scoreFontDouble = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 6
 scoreFontQuad = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 128)
 
 
-
 def menu():
 
     difficulty = 0
