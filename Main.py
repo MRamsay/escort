@@ -98,11 +98,19 @@ def menu():
             x_coordinate = ((surface.get_width() / 2) - instruction.get_size()[0] / 2)
             surface.blit(instruction, (x_coordinate, y_coordinate))
 
+        fps_rect = show_fps()
+        updates.append(fps_rect)
+
         surface.blit(transparency_background, star_rect[0], star_rect)
+
         updates.append(
             (draw_circle(surface, random_color(100, 255)), (50, 50)))
         pygame.display.update(updates)
+
         pygame.display.update(star_rect)
+
+        surface.blit(transparency_background, fps_rect)
+
         star_rect = updates[-1]
 
         if first_time:
@@ -121,22 +129,22 @@ def menu():
 
 def main():
 
-    DIFFICULTY = menu()
+    difficulty = menu()
 
     background = pygame.image.load(constants.IMAGE_PATH + constants.BACKGROUND_NAME).convert()
 
     game_over = False
 
-    background_x = (-constants.WINDOW_WIDTH / 48)
+    background_x = -constants.WINDOW_WIDTH / 48
 
     intro_outro_script(surface, background_transparent, background_x, scoreFont,
-                       "Save " + str(constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]) + " of our ships!")
+                       "Save " + str(constants.SAVED_SHIPS_REQUIRED[difficulty]) + " of our ships!")
 
     # Initialise sound objects
 
     laser = pygame.mixer.Sound(constants.IMAGE_PATH + constants.SOUND_LASER)
 
-    if DIFFICULTY == 2:
+    if difficulty == 2:
 
         pygame.mixer.music.load(constants.IMAGE_PATH + constants.SOUND_TWISTED)
         pygame.mixer.music.play(-1)
@@ -150,9 +158,11 @@ def main():
         laser.set_volume(0.5)
         explosion.set_volume(0.2)
 
-    ''' Main game loop
-	
-	'''
+    '''
+     Main game loop
+    
+    '''
+
     wait_time = constants.FPS
 
     wait_time_minimum = [120, 40, 15]
@@ -163,6 +173,7 @@ def main():
     other_sprites = InterpolateDrawGroup()
 
     sprite_groups = (critter_sprites, asteroid_sprites, bullet_sprites, other_sprites)
+    collide_sprites = pygame.sprite.Group()
 
     turret = Turret()
     other_sprites.add(turret)
@@ -189,14 +200,15 @@ def main():
 
             if ticktock > wait_time:
                 ticktock = 0
-                if wait_time >= wait_time_minimum[DIFFICULTY]:
+                if wait_time >= wait_time_minimum[difficulty]:
                     wait_time -= 10
                 if len(critter_sprites) < 10:
-                    critter_sprites.add(critter_builder.build())
+                    critter = critter_builder.build()
+                    critter.add(critter_sprites, collide_sprites)
 
-                    asteroid_sprites.add(asteroid_builder.build())
                     if random.randint(0, 10) < 2 and len(asteroid_sprites) < 3:
-                        asteroid_builder.build()
+                        asteroid = asteroid_builder.build()
+                        asteroid.add(asteroid_sprites, collide_sprites)
 
             else:
                 ticktock += .5
@@ -207,82 +219,65 @@ def main():
             keys = pygame.key.get_pressed()  # Event handling for keys pressed
 
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                background_x = turret.update_position("left", background_x)
+                direction = -1
             elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                background_x = turret.update_position("right",
-                                                      background_x)
+                direction = 1
             else:
-                turret.update_position(0, 0)
+                direction = 0
 
-            if keys[pygame.K_SPACE]:
-                if turret.get_can_shoot():
-                    bullet = Bullet(turret.get_gun_position())
-                    bullet_sprites.add(bullet)
-                    laser.play()
+            background_x = turret.update_position(direction, background_x)
+
+            if keys[pygame.K_SPACE] and turret.get_can_shoot():
+
+                bullet = Bullet(turret.get_gun_position())
+                bullet_sprites.add(bullet)
+                laser.play()
                 turret.update_can_shoot(False)
 
             turret.update_can_shoot(not keys[pygame.K_SPACE])
 
-            game_over = keys[pygame.K_ESCAPE]
-
-            collisions = pygame.sprite.groupcollide(critter_sprites, bullet_sprites, False,
+            collisions = pygame.sprite.groupcollide(collide_sprites, bullet_sprites, False,
                                                     True)  # check for collisions of bullets and critters
 
-            for critters in collisions:
-                critters.shot()
+            for collide in collisions:
+                collide.shot()
                 explosion.play()
                 pygame.draw.circle(surface, (255, 150, 0),
-                                   [critters.rect.x + (critters.rect.width / 2),
-                                    critters.rect.y + (critters.rect.height / 2)], 100)
-
-            collisions = pygame.sprite.groupcollide(asteroid_sprites, bullet_sprites, False, True)
-
-            for Asteroid in collisions:
-                Asteroid.shot()
-                explosion.play()
+                                   [collide.rect.x + (collide.rect.width / 2),
+                                    collide.rect.y + (collide.rect.height / 2)], 100)
 
             critter_sprites.update(critter_sprites)
-
             asteroid_sprites.update()
 
-            if game.get_ships_saved() >= constants.SAVED_SHIPS_REQUIRED[DIFFICULTY] or game.get_lives() <= 0:
+            game_over = keys[pygame.K_ESCAPE]
+
+            if game.get_ships_saved() >= constants.SAVED_SHIPS_REQUIRED[difficulty] or game.get_lives() <= 0:
                 game_over = True
 
         surface.blit(background, (background_x, 0))
-        seconds = clock.tick()  # length between frames
-
-
-
-
-        lives_text = scoreFont.render("Lives: " + str(game.get_lives()), True, constants.WHITE)
-
-        score_text = scoreFont.render("Score: " + str(game.get_score()), True, constants.WHITE)
-
-        ships_saved_text = scoreFont.render(
-            "Ships saved: " + str(game.get_ships_saved()) + " /" + str(
-                constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]), True,
-            constants.WHITE)
 
         if random.randint(0, 2) < 1:
             draw_circle(surface, random_color(100, 250))
 
-        fps_text = scoreFont.render(str(int(clock.get_fps())), True, (255, 0, 0))
-        fps_text_rect = fps_text.get_rect(width=(fps_text.get_width() * 2), left=5,
-                                          top=(constants.WINDOW_HEIGHT - fps_text.get_height() - 5))
-
+        # interpolated draw
         delta = elapsed_time - pygame.time.get_ticks()
-
         map(lambda x: x.draw(surface, delta), sprite_groups)
 
-        surface.blit(lives_text, (10, 260))
-        surface.blit(score_text, (10, 230))
-        surface.blit(ships_saved_text, (10, 200))
+        lives_text = scoreFont.render("Lives: {}".format(game.get_lives()), True, constants.WHITE)
+        score_text = scoreFont.render("Score: {}".format(game.get_score()), True, constants.WHITE)
+        ships_saved_text = scoreFont.render(
+            'Ships saved: {}/{}'.format(game.get_ships_saved(), constants.SAVED_SHIPS_REQUIRED[difficulty]),
+            True, constants.WHITE)
 
-        surface.blit(fps_text, fps_text_rect)
+        surface.blit(lives_text, (10, 60))
+        surface.blit(score_text, (10, 30))
+        surface.blit(ships_saved_text, (10, 0))
+
+        show_fps()
 
         pygame.display.update()
 
-        clock.tick(300)
+        clock.tick()
 
 
 
@@ -290,7 +285,7 @@ def main():
 
     surface.fill(constants.BLACK)  # clear surface
     pygame.mixer.music.fadeout(1600)
-    if game.get_ships_saved() < constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]:
+    if game.get_ships_saved() < constants.SAVED_SHIPS_REQUIRED[difficulty]:
         intro_outro_script(surface, background_transparent, background_x, scoreFont,
                            "Game over. Score: " + str(game.get_score()))
 
@@ -299,6 +294,15 @@ def main():
                            "Winner! Score: " + str(game.get_score()))
 
     main()
+
+
+def show_fps():
+    fps_text = scoreFont.render(str(int(clock.get_fps())), True, (255, 0, 0))
+
+    rect = fps_text.get_rect(top=(constants.WINDOW_HEIGHT - fps_text.get_height()), left=5)
+
+    surface.blit(fps_text, rect)
+    return rect
 
 
 def intro_outro_script(surface, background, background_x, score_font, text):

@@ -16,9 +16,9 @@ class Turret(pygame.sprite.Sprite):
 
     def update_position(self, direction, background_x):
 
-        if direction == "left" and self.rect.x > 15:
+        if direction == -1 and self.rect.left > 0:
             self.velocity_x = -constants.SPEED * 1.5
-        elif direction == "right" and self.rect.x < (constants.WINDOW_WIDTH - self.rect.width):
+        elif direction == 1 and self.rect.x < (constants.WINDOW_WIDTH - self.rect.width):
             self.velocity_x = constants.SPEED * 1.5
         else:
             self.velocity_x = 0
