@@ -7,45 +7,54 @@ from bullet import *
 from InterpolateDrawGroup import *
 import constants
 
+game = Game()
+pygame.mixer.pre_init(0, 0, 0, 1024)
+pygame.init()
+pygame.mouse.set_visible(False)
+pygame.display.set_caption(constants.GAME_TITLE)
+clock = pygame.time.Clock()
+surface = pygame.display.set_mode([constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT], (pygame.FULLSCREEN))
 
-def main():
-
-    #game variables
-
-    DIFFICULTY = 0
-    game = Game()
-    pygame.mixer.pre_init(0, 0, 0, 1024)
-    pygame.init()
-    pygame.mouse.set_visible(False)
-    pygame.display.set_caption(constants.GAME_TITLE)
-    clock = pygame.time.Clock()
-    surface = pygame.display.set_mode([constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT], (pygame.FULLSCREEN))
-    background = pygame.image.load(constants.IMAGE_PATH + constants.BACKGROUND_NAME).convert()
-    background_transparent = pygame.image.load(constants.IMAGE_PATH + constants.TRANSPARENT_BACKGROUND_NAME).convert()
-    scoreFont = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 32)
-    scoreFontDouble = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 64)
-    scoreFontQuad = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 128)
+background_transparent = pygame.image.load(constants.IMAGE_PATH + constants.TRANSPARENT_BACKGROUND_NAME).convert()
+scoreFont = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 32)
+scoreFontDouble = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 64)
+scoreFontQuad = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 128)
 
 
 
-    ticktock = 1
+def menu():
+
+    difficulty = 0
+    background_x = (-constants.WINDOW_WIDTH / 48)
+
     game_over = False
-    wait_time = constants.FPS
 
     '''
     Setup Main Menu
     '''
-    background_x = (-constants.WINDOW_WIDTH / 48)
+
     transparency_background = pygame.Surface([constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT], 32)
     transparency_background.blit(background_transparent, (background_x, 0))
-    selection = {"old": 0, "new": 0}
-    selection_options = ["EASY", "MEDIUM", "JAZZY"]
-    instructions = ["UP/DOWN ARROWS OR W/S KEYS: CHANGE SELECTION", "SPACE: CONFIRM SELECTION/SHOOT",
-                    "LEFT/RIGHT ARROWS OR A/D KEYS: MOVE SPACECRAFT", "ESCAPE: EXIT"]
+
+    selection_options = ("EASY", "MEDIUM", "JAZZY")
+    instructions = ("UP/DOWN ARROWS OR W/S KEYS: CHANGE SELECTION", "SPACE: CONFIRM SELECTION/SHOOT",
+                    "LEFT/RIGHT ARROWS OR A/D KEYS: MOVE SPACECRAFT", "ESCAPE: EXIT")
     first_time = True
     star_rect = ((0, 0), (0, 0))
     surface.blit(transparency_background, (0, 0))
     pygame.display.update()
+
+    instructions_rendered = map(lambda x: scoreFont.render(x, True, constants.WHITE), instructions)
+
+    difficulty_rendered = {}
+
+    for index, option in enumerate(selection_options):
+        difficulty_rendered[index] = {}
+        difficulty_rendered[index][False] = scoreFontDouble.render(option, True, constants.WHITE)
+        difficulty_rendered[index][True] = scoreFontDouble.render(option, True, constants.RED)
+
+    title = scoreFontQuad.render(constants.TITLE, True, constants.WHITE)
+
     while not game_over:
 
         # print(clock.get_fps())
@@ -57,49 +66,39 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 if event.key == pygame.K_UP or event.key == pygame.K_w:
-                    selection["old"] = DIFFICULTY
-                    if DIFFICULTY == 0:
-                        DIFFICULTY = 2
+
+                    if difficulty == 0:
+                        difficulty = 2
                     else:
-                        DIFFICULTY -= 1
-                    selection["new"] = DIFFICULTY
+                        difficulty -= 1
+
                 if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                    selection["old"] = DIFFICULTY
-                    if DIFFICULTY == 2:
-                        DIFFICULTY = 0
+
+                    if difficulty == 2:
+                        difficulty = 0
                     else:
-                        DIFFICULTY += 1
-                    selection["new"] = DIFFICULTY
+                        difficulty += 1
+
                 if event.key == pygame.K_SPACE:
                     game_over = True
 
-        score_text = scoreFontQuad.render(constants.TITLE, True, constants.WHITE)
-        surface.blit(score_text, [(surface.get_width() / 2) - score_text.get_size()[0] / 2, 100])
+        surface.blit(title, [(surface.get_width() / 2) - title.get_size()[0] / 2, 100])
+
         for n, option in enumerate(selection_options):
-            needs_rendering = False
-            if n == selection["new"]:
-                score_text = scoreFontDouble.render(option, True, constants.RED)
-                needs_rendering = True
-            elif n == selection["old"]:
-                score_text = scoreFontDouble.render(option, True, constants.WHITE)
-                needs_rendering = True
-                y_coordinate = (surface.get_height() / 2 - 200) + (100 * (n - 1))
-                x_coordinate = ((surface.get_width() / 2) - score_text.get_size()[0] / 2)
-                updates.append([x_coordinate, y_coordinate, score_text.get_size()[0], score_text.get_size()[1]])
-                surface.blit(score_text, (x_coordinate, y_coordinate))
-            if needs_rendering:
-                y_coordinate = (surface.get_height() / 2 - 200) + (100 * (n - 1))
-                x_coordinate = ((surface.get_width() / 2) - score_text.get_size()[0] / 2)
-                surface.blit(score_text, (x_coordinate, y_coordinate))
-                updates.append([x_coordinate, y_coordinate, score_text.get_size()[0], score_text.get_size()[1]])
+            selected = n == difficulty
+            text = difficulty_rendered[n][selected]
 
-        for n in range(0, len(instructions)):
-            score_text = scoreFont.render(instructions[n], True, constants.WHITE)
+            y_coordinate = (surface.get_height() / 2 - 200) + (100 * (n - 1))
+            x_coordinate = ((surface.get_width() / 2) - text.get_size()[0] / 2)
+            updates.append([x_coordinate, y_coordinate, text.get_size()[0], text.get_size()[1]])
+            surface.blit(text, (x_coordinate, y_coordinate))
+
+        for n, instruction in enumerate(instructions_rendered):
             y_coordinate = (surface.get_height() / 2 + 300) + (50 * (n - 1))
-            x_coordinate = ((surface.get_width() / 2) - score_text.get_size()[0] / 2)
-            surface.blit(score_text, (x_coordinate, y_coordinate))
+            x_coordinate = ((surface.get_width() / 2) - instruction.get_size()[0] / 2)
+            surface.blit(instruction, (x_coordinate, y_coordinate))
 
-        surface.blit(background, star_rect[0], star_rect)
+        surface.blit(transparency_background, star_rect[0], star_rect)
         updates.append(
             (draw_circle(surface, random_color(100, 255)), (50, 50)))
         pygame.display.update(updates)
@@ -114,11 +113,22 @@ def main():
                 surface.blit(score_text, (x_coordinate, y_coordinate))
 
             first_time = False
-            background.blit(surface, (0, 0))
+            transparency_background.blit(surface, (0, 0))
             pygame.display.update()
 
+    return difficulty
+
+
+def main():
+
+    DIFFICULTY = menu()
+
     background = pygame.image.load(constants.IMAGE_PATH + constants.BACKGROUND_NAME).convert()
+
     game_over = False
+
+    background_x = (-constants.WINDOW_WIDTH / 48)
+
     intro_outro_script(surface, background_transparent, background_x, scoreFont,
                        "Save " + str(constants.SAVED_SHIPS_REQUIRED[DIFFICULTY]) + " of our ships!")
 
@@ -143,6 +153,7 @@ def main():
     ''' Main game loop
 	
 	'''
+    wait_time = constants.FPS
 
     wait_time_minimum = [120, 40, 15]
 
@@ -161,6 +172,8 @@ def main():
 
     elapsed_time = pygame.time.get_ticks()
     update_time = constants.TICK_PERIOD
+
+    ticktock = 1
 
     while not game_over:
 
@@ -260,8 +273,6 @@ def main():
         delta = elapsed_time - pygame.time.get_ticks()
 
         map(lambda x: x.draw(surface, delta), sprite_groups)
-
-
 
         surface.blit(lives_text, (10, 260))
         surface.blit(score_text, (10, 230))
