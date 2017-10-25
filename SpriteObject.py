@@ -7,7 +7,8 @@ import constants
 
 class SpriteObject(pygame.sprite.Sprite):
 
-    def __init__(self, game, image, velocity_x=0, velocity_y=0, kill_score=0, succeed_score=0, health=1, time=0, position=(0,0)):
+    def __init__(self, game, image, velocity_x=0, velocity_y=0,
+                 kill_score=0, succeed_score=0, health=1, time=0, position=(0,0)):
         pygame.sprite.Sprite.__init__(self)
 
         self.velocity_x = velocity_x
@@ -41,6 +42,10 @@ class SpriteObject(pygame.sprite.Sprite):
 
         self.rect.x += self.velocity_x * constants.TICK_PERIOD
         self.rect.y += self.velocity_y * constants.TICK_PERIOD
+
+    def succeed(self):
+        self.game.update_score(self.succeed_score)
+        self.kill()
 
     def shot(self):
         self.health -= 1

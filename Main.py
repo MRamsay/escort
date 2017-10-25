@@ -177,7 +177,7 @@ def main():
     turret = Turret()
     other_sprites.add(turret)
 
-    asteroid_builder = AsteroidBuilder()
+    asteroid_builder = AsteroidBuilder(game)
     critter_builder = CritterBuilder(game)
 
     elapsed_time = pygame.time.get_ticks()
@@ -204,7 +204,8 @@ def main():
                 if len(critter_sprites) < 10:
                     critter = critter_builder.build()
                     critter.add(critter_sprites, collide_sprites)
-
+                    asteroid = asteroid_builder.build()
+                    asteroid.add(asteroid_sprites, collide_sprites)
                     if random.randint(0, 10) < 2 and len(asteroid_sprites) < 3:
                         asteroid = asteroid_builder.build()
                         asteroid.add(asteroid_sprites, collide_sprites)

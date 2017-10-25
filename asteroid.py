@@ -1,71 +1,55 @@
 import pygame
 import random
 import constants
-
+from SpriteObject import SpriteObject
 
 class AsteroidBuilder:
 
-    def __init__(self):
-        self.window_height = constants.WINDOW_HEIGHT
-        self.window_width = constants.WINDOW_WIDTH
-        self.speed = constants.SPEED
+    def __init__(self, game):
+        self.game = game
 
     def build(self):
-        return Asteroids(self.window_height, self.window_width, self.speed)
+        return Asteroids(self.game)
 
 
-class Asteroids(pygame.sprite.Sprite):
+class Asteroids(SpriteObject):
 
     image_reference = pygame.image.load("images/Asteroid.png")
 
-    def __init__(self, window_height, window_width, speed):
-
-        pygame.sprite.Sprite.__init__(self)
-
-        self.window_height = window_height
-        self.window_width = window_width
+    def __init__(self, game):
 
         self.rotation_change = random.uniform(-1, 1)
         self.rotation_degrees = 0
 
-        self.image = Asteroids.image_reference
-        self.image_reference = self.image
+        image = Asteroids.image_reference
+        rect = image.get_rect()
 
-        self.rect = self.image.get_rect()
-
-        self.rect.y = random.randint(self.rect.height / 2, (self.window_width - self.rect.height))
+        y_pos = random.randint(rect.height / 2, (constants.WINDOW_WIDTH - rect.height))
 
         self.direction = random.choice(["left", "right"])  # which way to go
         if self.direction == "left":
-            self.rect.x = self.window_width + self.rect.x
-            self.speed = -speed
+            x_pos = constants.WINDOW_WIDTH + rect.x
+            velocity = -constants.SPEED
         else:
-            self.rect.x = (0 - self.rect.x)
-            self.speed = speed
+            x_pos = (0 - rect.x)
+            velocity = constants.SPEED
 
-        self.hit_points = 5  # number of hits it takes
+        position = (x_pos, y_pos)
 
-        self.velocity_x = self.speed
-        self.velocity_y = 0
+        SpriteObject.__init__(self, game=game, image=Asteroids.image_reference, velocity_x=velocity, health=5, position=position)
 
     def update(self):
 
-        self.rect.x += (self.speed * constants.TICK_PERIOD)
-
-        self.image = pygame.transform.rotate(self.image_reference, self.rotation_degrees)
-
-        self.rect = self.image.get_rect(center=self.rect.center)
+        super(Asteroids, self).update()
 
         self.rotation_degrees += self.rotation_change
+        self.image = pygame.transform.rotate(self.image_reference, self.rotation_degrees)
 
-        if self.rect.x > (self.window_width + self.rect.x):
-            self.kill()
+        if self.rect.x > (constants.WINDOW_WIDTH + self.rect.x):
+            self.succeed()
         elif self.rect.x < (0 - self.rect.x):
-            self.kill()
+            self.succeed()
 
     def shot(self):
-        self.hit_points -= 1
-
-        if self.hit_points <= 0:
-            self.kill()
+        super(Asteroids, self).shot()
 
