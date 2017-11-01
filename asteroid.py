@@ -1,7 +1,8 @@
 import pygame
 import random
 import constants
-from SpriteObject import SpriteObject
+from SpriteKillable import SpriteKillable
+
 
 class AsteroidBuilder:
 
@@ -12,7 +13,7 @@ class AsteroidBuilder:
         return Asteroids(self.game)
 
 
-class Asteroids(SpriteObject):
+class Asteroids(SpriteKillable):
 
     image_reference = pygame.image.load("images/Asteroid.png")
 
@@ -36,7 +37,7 @@ class Asteroids(SpriteObject):
 
         position = (x_pos, y_pos)
 
-        SpriteObject.__init__(self, game=game, image=Asteroids.image_reference, velocity_x=velocity, health=5, position=position)
+        SpriteKillable.__init__(self, game=game, image=Asteroids.image_reference, velocity_x=velocity, health=5, position=position)
 
     def update(self):
 
@@ -49,7 +50,4 @@ class Asteroids(SpriteObject):
             self.succeed()
         elif self.rect.x < (0 - self.rect.x):
             self.succeed()
-
-    def shot(self):
-        super(Asteroids, self).shot()
 

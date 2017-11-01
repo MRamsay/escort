@@ -5,6 +5,7 @@ from game import *
 from turret import *
 from bullet import *
 from InterpolateDrawGroup import *
+from Spawner import *
 import constants
 
 game = Game()
@@ -167,18 +168,19 @@ def main():
     wait_time_minimum = [120, 40, 15]
 
     critter_sprites = InterpolateDrawGroup()
+    ship_sprites = InterpolateDrawGroup()
     asteroid_sprites = InterpolateDrawGroup()
     bullet_sprites = InterpolateDrawGroup()
     other_sprites = InterpolateDrawGroup()
 
-    sprite_groups = (critter_sprites, asteroid_sprites, bullet_sprites, other_sprites)
     collide_sprites = pygame.sprite.Group()
+    spawner = Spawner(game, collide_sprites, critter_sprites, ship_sprites, asteroid_sprites)
+
+    sprite_groups = (critter_sprites, ship_sprites, asteroid_sprites, bullet_sprites, other_sprites)
+
 
     turret = Turret()
     other_sprites.add(turret)
-
-    asteroid_builder = AsteroidBuilder(game)
-    critter_builder = CritterBuilder(game)
 
     elapsed_time = pygame.time.get_ticks()
     update_time = constants.TICK_PERIOD
@@ -201,14 +203,7 @@ def main():
                 ticktock = 0
                 if wait_time >= wait_time_minimum[difficulty]:
                     wait_time -= 10
-                if len(critter_sprites) < 10:
-                    critter = critter_builder.build()
-                    critter.add(critter_sprites, collide_sprites)
-                    asteroid = asteroid_builder.build()
-                    asteroid.add(asteroid_sprites, collide_sprites)
-                    if random.randint(0, 10) < 2 and len(asteroid_sprites) < 3:
-                        asteroid = asteroid_builder.build()
-                        asteroid.add(asteroid_sprites, collide_sprites)
+                spawner.spawn()
 
             else:
                 ticktock += .5
@@ -248,6 +243,7 @@ def main():
 
             critter_sprites.update(critter_sprites)
             asteroid_sprites.update()
+            ship_sprites.update()
 
             game_over = keys[pygame.K_ESCAPE]
 

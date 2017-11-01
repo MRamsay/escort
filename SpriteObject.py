@@ -7,25 +7,16 @@ import constants
 
 class SpriteObject(pygame.sprite.Sprite):
 
-    def __init__(self, game, image, velocity_x=0, velocity_y=0,
-                 kill_score=0, succeed_score=0, health=1, time=0, position=(0,0)):
+    def __init__(self, image, velocity_x=0, velocity_y=0, time=0, position=(0, 0)):
         pygame.sprite.Sprite.__init__(self)
 
         self.velocity_x = velocity_x
         self.velocity_y = velocity_y
 
         self.image = image
-        self.game = game
-
-        self.kill_score = kill_score
-
-        # if sprite goes off screen, or some other accomplishment
-        self.succeed_score = succeed_score
 
         # sprite dimensions and position
         self.rect = self.image.get_rect()
-
-        self.health = health
 
         self.time = time
 
@@ -43,12 +34,3 @@ class SpriteObject(pygame.sprite.Sprite):
         self.rect.x += self.velocity_x * constants.TICK_PERIOD
         self.rect.y += self.velocity_y * constants.TICK_PERIOD
 
-    def succeed(self):
-        self.game.update_score(self.succeed_score)
-        self.kill()
-
-    def shot(self):
-        self.health -= 1
-        if self.health < 1:
-            self.game.update_score(self.kill_score)
-            self.kill()

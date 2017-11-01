@@ -1,17 +1,24 @@
 import pygame
 import constants
+from SpriteObject import SpriteObject
 
 
-class Bullet(pygame.sprite.Sprite):
+class Bullet(SpriteObject):
+
+    image = pygame.image.load("images/bullet.png")
+
     def __init__(self, position):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load("images/bullet.png")
-        self.rect = self.image.get_rect()
-        self.rect.x = position["x"] - (self.rect.width / 2)
-        self.rect.y = position["y"]
 
-        self.velocity_x = 0
-        self.velocity_y = -constants.SPEED * 3
+        width = Bullet.image.get_rect().width
+
+        x = position["x"] - (width / 2)
+        y = position["y"]
+
+        position = (x, y)
+
+        velocity_y = -constants.SPEED * 1.5
+
+        SpriteObject.__init__(self, image=Bullet.image, velocity_y= velocity_y, position=position)
 
     def update_position(self):
         if self.rect.y >= self.rect.height:
