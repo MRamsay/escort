@@ -241,7 +241,7 @@ def main():
                                    [collide.rect.x + (collide.rect.width / 2),
                                     collide.rect.y + (collide.rect.height / 2)], 100)
 
-            critter_sprites.update(critter_sprites)
+            critter_sprites.update(ship_sprites)
             asteroid_sprites.update()
             ship_sprites.update()
 

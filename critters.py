@@ -50,13 +50,13 @@ class Critter(SpriteKillable):
         self.moving_image = False
 
         self.timer = 0
-        self.timer_max = constants.FPS /2
+        self.timer_max = constants.TICKS_PER_SECOND / 2
 
-    def calculate_motion(self, critter_sprites):
+    def calculate_motion(self, track_sprites):
 
         movement_speed = constants.SPEED * constants.TICK_PERIOD
 
-        self.track_ship(critter_sprites)  # Obtain a target
+        self.track_ship(track_sprites)  # Obtain a target
 
         if self.tracking:
             if -movement_speed < self.rect.x - self.tracking_position[0] < movement_speed:
@@ -69,9 +69,9 @@ class Critter(SpriteKillable):
         else:
             self.velocity_x = 0
 
-    def update(self, critter_sprites):
+    def update(self, track_sprites):
 
-        self.calculate_motion(critter_sprites)
+        self.calculate_motion(track_sprites)
 
         super(Critter, self).update()
 
@@ -111,7 +111,7 @@ class Critter(SpriteKillable):
         self.tracking = False
         # ships below critter
         targets = [target for target in critter_sprites if
-                   target.get_species() == "Ship" and target.get_position()[1] > self.get_position()[1]]
+                   target.get_position()[1] > self.get_position()[1]]
 
         if targets:
             target = min(targets, key=self.calculate_distance)
