@@ -29,6 +29,9 @@ class Ship(SpriteKillable):
                                 kill_score=kill_score, succeed_score=succeed_score,
                                 position=position)
 
+    def get_position(self):
+        return [self.rect.x, self.rect.y]
+
     def shot(self):
 
         self.game.update_lives(-1)
