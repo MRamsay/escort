@@ -234,6 +234,7 @@ def main():
             collisions = pygame.sprite.groupcollide(collide_sprites, bullet_sprites, False,
                                                     True)  # check for collisions of bullets and critters
 
+
             for collide in collisions:
                 collide.shot()
                 explosion.play()
