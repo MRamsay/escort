@@ -21,6 +21,50 @@ scoreFont = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 32)
 scoreFontDouble = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 64)
 scoreFontQuad = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 128)
 
+# raycast collision detection. b is a ray, a is a surface
+def collided(sprite_a, sprite_b):
+
+    # position = lambda start, velocity, time: start + (velocity*time)
+
+    a_rect = sprite_a.rect
+    b_rect = sprite_b.rect
+
+    velocity_y_a = sprite_a.velocity_y
+    velocity_y_b = sprite_b.velocity_y
+
+    velocity_x_a = sprite_a.velocity_x
+    velocity_x_b = sprite_b.velocity_x
+
+    # sprite's initial position
+    y_a_initial = a_rect.y - velocity_y_a * constants.TICK_PERIOD
+    y_b_initial = b_rect.y - velocity_y_b * constants.TICK_PERIOD
+
+    x_a_initial = a_rect.x - velocity_x_a * constants.TICK_PERIOD
+    x_b_initial = b_rect.x - velocity_x_b * constants.TICK_PERIOD
+
+    collision_time = ((y_b_initial - y_a_initial) / (velocity_y_a - velocity_y_b))
+    # if velocity_x_a != velocity_x_b:
+    #     collision_time_x = ((x_b_initial - x_a_initial) / (velocity_x_a - velocity_x_b))
+    # else:
+    #     collision_time_x = collision_time_y
+
+    y_a_collision = y_a_initial + velocity_y_a * collision_time
+    x_a_collision = x_a_initial + velocity_x_a * collision_time
+
+    y_b_collision = y_b_initial + a_rect.height + velocity_y_b * collision_time
+    x_b_collision = x_b_initial + velocity_x_b * collision_time
+
+    position_a = (x_a_collision, y_a_collision)
+    position_b = (x_b_collision, y_b_collision)
+
+    a_collide_rect = sprite_a.image.get_rect(topleft=position_a)
+    b_collide_rect = sprite_b.image.get_rect(bottomleft=position_b)
+
+    pygame.draw.rect(surface, (255, 255, 255), a_collide_rect)
+    pygame.draw.rect(surface, (255, 0, 0), b_collide_rect)
+
+    return a_collide_rect.colliderect(b_collide_rect) and 0 <= collision_time <= constants.TICK_PERIOD
+
 
 def menu():
 
@@ -178,7 +222,6 @@ def main():
 
     sprite_groups = (critter_sprites, ship_sprites, asteroid_sprites, bullet_sprites, other_sprites)
 
-
     turret = Turret()
     other_sprites.add(turret)
 
@@ -232,8 +275,7 @@ def main():
             turret.update_can_shoot(not keys[pygame.K_SPACE])
 
             collisions = pygame.sprite.groupcollide(collide_sprites, bullet_sprites, False,
-                                                    True)  # check for collisions of bullets and critters
-
+                                                    True, collided)  # check for collisions of bullets and critters
 
             for collide in collisions:
                 collide.shot()

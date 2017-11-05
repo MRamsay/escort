@@ -34,7 +34,7 @@ class Spawner():
         choices = (
             ((critters.Critter, self.critter_group), 70),
             ((ship.Ship, self.ship_group), 20),
-            ((asteroid.Asteroids, self.asteroid_group), 10)
+            ((asteroid.Asteroids, self.asteroid_group), 500)
         )
 
         # choose which kind of creature to spawn
