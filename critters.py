@@ -1,83 +1,122 @@
-import pygame, random, math
-class Critter(pygame.sprite.Sprite):	
-	def __init__(self,WINDOWWIDTH,WINDOWHEIGHT,critter_sprites,FPS):
-		self.attitude_angle=0		
-		self.timer_max=FPS/2	
-		self.timer=0			
-		pygame.sprite.Sprite.__init__(self)
-		self.tracking=False
-		self.tracking_position=[0,0]
-		self._species=random.choice(["Ship","Strawberry","Alien","Squid"])
-		self.image=pygame.image.load("images/"+self._species+".png")
-		self.rect=self.image.get_rect()
-		self.rect.y=0-self.rect.height
-		self.rect.x=(random.randint(self.rect.width/2,(WINDOWWIDTH-self.rect.width)))
-		self.moving_image=False		
-		if self._species=="Ship":
-			self.image=pygame.transform.rotate(self.image,180)
-		else:
-			self.image_reference=self.image	
-			self.image_reference_moving=pygame.image.load("images/"+self._species+"_moving.png")
-					
-	def update_position(self,speed,WINDOWWIDTH,WINDOWHEIGHT,game,seconds,critter_sprites):	
-		movement_speed=speed*seconds	
-		self.track_ship(WINDOWWIDTH,WINDOWHEIGHT,critter_sprites)#Obtain a target							
-		self.rect.y+=movement_speed	
-		self.timer+=1		
-		if self.timer>=self.timer_max and self._species!="Ship":	
-			if self.moving_image == False:									
-				self.image = self.image_reference_moving
-				self.moving_image = True	
-			else:					
-				self.image=self.image_reference	
-				self.moving_image = False
-			self.timer=0
-							
-		if self.tracking:	
-			if -(movement_speed)<self.rect.x-self.tracking_position[0]<(movement_speed):
-				self.rect.x=self.tracking_position[0]					
-			elif self.rect.x<self.tracking_position[0]:
-				self.rect.x+=movement_speed
-				movement_speed=movement_speed										
-			else:
-				self.rect.x-=movement_speed											
-															
-		if self.rect.y>(WINDOWHEIGHT):	
-			if self._species=="Ship":
-				game.update_score(50)
-				game.update_Ships_saved()
-			else:
-				game.update_score(-10)
-				game.update_lives(-1)
-			self.kill()	
-		
-	def get_position(self):
-		return [self.rect.x,self.rect.y]	
-			
-	def shot(self,game):
-		if self._species=="Ship":
-			game.update_score(-50)
-			game.update_lives(-1)
-		else:
-			game.update_score(10)
-		self.kill()
-		
-	def get_species(self):
-		return self._species	
-							
-	def track_ship(self,WINDOWWIDTH,WINDOWHEIGHT,critter_sprites):
-		if self._species=="Ship":
-			return
-		potential_target=math.hypot(WINDOWWIDTH,WINDOWHEIGHT)
-		self.tracking=False
-		for Critter in critter_sprites:			
-			if Critter.get_species() == "Ship":
-				delta_x=abs(Critter.get_position()[1]-self.get_position()[1])
-				delta_y=abs(Critter.get_position()[1]-self.get_position()[1])
-				if potential_target>math.hypot(delta_x,delta_y) and Critter.get_position()[1]>self.get_position()[1]:
-					potential_target=math.hypot(delta_x,delta_y)
-					self.tracking=True 
-					self.tracking_position=Critter.get_position()				
-						
-	def get_dimensions(self):
-		return[self.rect.width,self.rect.height]	
+import pygame
+import random
+import math
+from SpriteKillable import SpriteKillable
+
+import constants
+
+
+class CritterBuilder:
+
+    def __init__(self, game):
+        self.game = game
+
+    def build(self):
+        return Critter(self.game)
+
+
+class Critter(SpriteKillable):
+
+    reference_images = {}
+    reference_images_moving = {}
+
+    species = ["Strawberry", "Alien", "Squid"]
+    for choice in species:
+        reference_images[choice] = pygame.image.load("images/" + choice + ".png")
+
+        reference_images_moving[choice] = pygame.image.load("images/" + choice + "_moving.png")
+
+    def __init__(self, game):
+
+        self._species = random.choice(Critter.species)
+
+        image = Critter.reference_images[self._species]
+
+        rect = image.get_rect()
+
+        x_pos = random.randint(rect.width / 2, (constants.WINDOW_WIDTH - rect.width))
+        y_pos = 0 - rect.height
+
+        kill_score = 10
+        succeed_score = -50
+
+        SpriteKillable.__init__(self, game=game, image=image, velocity_y=constants.SPEED,
+                                kill_score=kill_score, succeed_score=succeed_score,
+                                position=(x_pos, y_pos))
+
+        self.tracking = False
+        self.tracking_position = [0, 0]
+
+        self.moving_image = False
+
+        self.timer = 0
+        self.timer_max = constants.TICKS_PER_SECOND / 2
+
+    def calculate_motion(self, track_sprites):
+
+        movement_speed = constants.SPEED * constants.TICK_PERIOD
+
+        self.track_ship(track_sprites)  # Obtain a target
+
+        if self.tracking:
+            if -movement_speed < self.rect.x - self.tracking_position[0] < movement_speed:
+                self.rect.x = self.tracking_position[0]
+                self.velocity_x = 0
+            elif self.rect.x < self.tracking_position[0]:
+                self.velocity_x = constants.SPEED
+            else:
+                self.velocity_x = -constants.SPEED
+        else:
+            self.velocity_x = 0
+
+    def update(self, track_sprites):
+
+        self.calculate_motion(track_sprites)
+
+        super(Critter, self).update()
+
+        self.timer += 1
+
+        if self.timer >= self.timer_max:
+            if not self.moving_image:
+                self.image = Critter.reference_images_moving[self._species]
+                self.moving_image = True
+            else:
+                self.image = Critter.reference_images[self._species]
+                self.moving_image = False
+            self.timer = 0
+
+        if self.rect.y > constants.WINDOW_HEIGHT:
+            self.game.update_lives(-1)
+            self.succeed()
+
+    def get_species(self):
+        return self._species
+
+    def get_velocity(self):
+        return self.velocity_x, self.velocity_y
+
+    # distance from critter to target
+    def calculate_distance(self, target):
+        delta_x = target.rect.x - self.rect.x
+        delta_y = target.rect.y - self.rect.y
+
+        return abs(math.hypot(delta_x, delta_y))
+
+    def get_position(self):
+        return [self.rect.x, self.rect.y]
+
+    def track_ship(self, critter_sprites):
+
+        self.tracking = False
+        # ships below critter
+        targets = [target for target in critter_sprites if
+                   target.get_position()[1] > self.get_position()[1]]
+
+        if targets:
+            target = min(targets, key=self.calculate_distance)
+            self.tracking_position = target.get_position()
+            self.tracking = True
+
+    def get_dimensions(self):
+        return [self.rect.width, self.rect.height]
