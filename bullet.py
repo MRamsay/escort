@@ -16,7 +16,7 @@ class Bullet(SpriteObject):
 
         position = (x, y)
 
-        velocity_y = -constants.SPEED * 1.5
+        velocity_y = -constants.SPEED * 7
 
         SpriteObject.__init__(self, image=Bullet.image, velocity_y= velocity_y, position=position)
 

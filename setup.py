@@ -83,7 +83,7 @@ class BuildExe:
         self.zipfile_name = None
  
         #Dist directory
-        self.dist_dir ='dist'
+        self.dist_dir =''
  
     ## Code from DistUtils tutorial at http://wiki.python.org/moin/Distutils/Tutorial
     ## Originally borrowed from wxPython's setup and config files
