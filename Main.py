@@ -275,8 +275,8 @@ def main():
 
             turret.update_can_shoot(not keys[pygame.K_SPACE])
 
-            collisions = pygame.sprite.groupcollide(collide_sprites, bullet_sprites, False,
-                                                    True, collided)  # check for collisions of bullets and critters
+            collisions = pygame.sprite.groupcollide(collide_sprites, bullet_sprites, False, True, collided)  # check for collisions of bullets and critters
+
 
             for collide in collisions:
                 collide.shot()
