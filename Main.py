@@ -21,6 +21,7 @@ scoreFont = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 32)
 scoreFontDouble = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 64)
 scoreFontQuad = pygame.font.Font(constants.IMAGE_PATH + constants.FONT_NAME, 128)
 
+
 # raycast collision detection. b is a ray, a is a surface
 def collided(sprite_a, sprite_b):
 
