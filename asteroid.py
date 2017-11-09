@@ -37,14 +37,16 @@ class Asteroids(SpriteKillable):
 
         position = (x_pos, y_pos)
 
-        SpriteKillable.__init__(self, game=game, image=Asteroids.image_reference, velocity_x=velocity, health=5, position=position)
+        SpriteKillable.__init__(self, game=game, image=Asteroids.image_reference, velocity_x=velocity, health=1, position=position)
 
     def update(self):
 
         super(Asteroids, self).update()
 
         self.rotation_degrees += self.rotation_change
-        self.image = pygame.transform.rotate(self.image_reference, self.rotation_degrees)
+        # self.image = pygame.transform.rotate(self.image_reference, self.rotation_degrees)
+
+        # self.rect = self.image.get_rect(x=self.rect.x, y=self.rect.y)
 
         if self.rect.x > (constants.WINDOW_WIDTH + self.rect.x):
             self.succeed()
