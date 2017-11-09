@@ -37,7 +37,7 @@ class Asteroids(SpriteKillable):
 
         position = (x_pos, y_pos)
 
-        SpriteKillable.__init__(self, game=game, image=Asteroids.image_reference, velocity_x=velocity, health=1, position=position)
+        SpriteKillable.__init__(self, game=game, image=Asteroids.image_reference, velocity_x=velocity, health=5, position=position)
 
     def update(self):
 
